@@ -3,3 +3,4 @@ data/
 __pycache__/
 *.wav
 saved_models/
+out/

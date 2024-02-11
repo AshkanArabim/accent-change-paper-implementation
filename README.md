@@ -8,3 +8,6 @@ Link to paper: https://ieeexplore.ieee.org/document/9053797
 
 ## setup
 Source the `saved_models` directory from this implementation: https://github.com/CorentinJ/Real-Time-Voice-Cloning?tab=readme-ov-file
+
+## usage
+TODO:

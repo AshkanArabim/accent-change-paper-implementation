@@ -1,34 +1,37 @@
 import argparse
-import soundfile as sf
+import torch
+from TTS.api import TTS
+import os
 
-from voice_embedder import embed_voices
 import ASR
-from MS_TTS import synth_audio
 
 if __name__ == "__main__":
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+    
     # TODO: add -h descriptions
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input")
     parser.add_argument("-o", "--output", required=False, default="out.wav")
+    parser.add_argument("--input_dir", required=False)
+    parser.add_argument("--output_dir", required=False, default="out")
     
     args = parser.parse_args()
     
-    # get voice embedding
-    voice_embedding = embed_voices([args.input])[0]
-    
-    # print(len(voice_embedding[0])) # DEBUG
-    
-    # get content of recording
-    content = ASR.annotate_files([args.input])[0]['text']
-    
-    # print("CONTENT:", content) # DEBUG
-    
-    # generate output
-    audio_array, sample_rate = synth_audio(content, voice_embedding)
-    
-    # save output
-    out_path = args.output
-    sf.write(out_path, audio_array, sample_rate)
-    print()
-    print(f"Output saved to {out_path}")
-    
+    if args.input_dir:
+        # we'll assume output_dir is provided
+        os.makedirs(args.output_dir, exist_ok=True)
+        
+        source_names = [source_name for source_name in os.listdir(args.input_dir) if ".wav" in source_name]
+        source_paths = [os.path.join(args.input_dir, source_name) for source_name in source_names]
+        out_paths = [os.path.join(args.output_dir, source_name) for source_name in source_names]
+        # get content of all recordings
+        contents = [content['text'] for content in ASR.annotate_files(source_paths)]
+        for i in range(len(source_names)):
+            tts.tts_to_file(text=contents[i], speaker_wav=source_paths[i], language="en", file_path=out_paths[i])
+    else:
+        # get content of recording
+        content = ASR.annotate_files([args.input])[0]['text']
+        
+        # generate and save output
+        tts.tts_to_file(text=content, speaker_wav=args.input, language="en", file_path=args.output)
