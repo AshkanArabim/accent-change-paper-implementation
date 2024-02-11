@@ -1,1 +1,5 @@
 data/
+.vscode/
+__pycache__/
+*.wav
+saved_models/
